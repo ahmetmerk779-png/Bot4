@@ -1,31 +1,28 @@
 import mineflayer from 'mineflayer';
 import { pathfinder } from 'mineflayer-pathfinder';
+import { loadConfig, loadMemory } from './configManager';
 
-// Render çevre değişkenlerinden (Environment Variables) veya doğrudan bu alandan ayarlanabilir
-const botConfig = {
-  host: process.env.MC_HOST || 'oyun_sunucu_ip_adresi', 
-  port: parseInt(process.env.MC_PORT || '25565'),                  
-  username: process.env.MC_USERNAME || 'OtonomBot',        
-  version: '1.21.11',           // Kesinlikle istenen Minecraft sürümü
-  ownerName: process.env.MC_OWNER || 'SeninKullaniciAdin' // Sadece senden gelen /msg'leri kabul eder
-};
+// Web panelinden yönetilen konfigürasyonu yüklüyoruz
+const config = loadConfig();
+const memory = loadMemory();
+
+console.log(`[BAŞLANGIÇ] Bot ${config.username} için ayarlar yükleniyor... Sürüm: ${config.version}`);
 
 const bot = mineflayer.createBot({
-  host: botConfig.host,
-  port: botConfig.port,
-  username: botConfig.username,
-  version: botConfig.version
+  host: config.host,
+  port: config.port,
+  username: config.username,
+  version: config.version
 });
 
-// Pathfinder eklentisini bota yüklüyoruz
 bot.loadPlugin(pathfinder);
 
 bot.once('spawn', () => {
-  console.log(`[BAŞARILI] Bot ${bot.username} oyuna giriş yaptı! Sürüm: ${botConfig.version}`);
+  console.log(`[BAŞARILI] Bot ${bot.username} oyuna giriş yaptı!`);
   startAfkBehavior();
 });
 
-// AFK Özelliği: Botun oyundan düşmesini engellemek için hafif kafa hareketleri
+// AFK ve Kafa Çevirme Özelliği
 function startAfkBehavior() {
   setInterval(() => {
     if (!bot.entity) return;
@@ -35,10 +32,10 @@ function startAfkBehavior() {
   }, 5000); 
 }
 
-// İletişim Güvenliği: Yalnızca sahibinden gelen /msg komutlarını dinleme
+// Sadece Web Panelinde belirlenen "ownerName" ile /msg üzerinden iletişim
 bot.on('whisper', (username, message) => {
-  if (username !== botConfig.ownerName) {
-    bot.chat(`/msg ${username} Üzgünüm, ben sadece sahibim ile iletişim kurarım.`);
+  if (username !== config.ownerName) {
+    bot.chat(`/msg ${username} Üzgünüm, ben sadece sahibim (${config.ownerName}) ile iletişim kurarım.`);
     return;
   }
 
@@ -52,5 +49,5 @@ bot.on('whisper', (username, message) => {
 
 bot.on('error', (err) => console.log('[HATA]:', err));
 bot.on('end', () => {
-  console.log('[BİLGİ] Bağlantı koptu, yeniden bağlanma hazırlığı...');
+  console.log('[BİLGİ] Bağlantı koptabaşlatılıyor, otomatik yeniden bağlanma tetiklenecek...');
 });
