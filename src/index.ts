@@ -5,6 +5,7 @@ import './server'; // Web sunucusunu başlatır
 import { io } from './server';
 import { setupChatCraftBridge } from './chatcraftBridge';
 import { setupAutoReconnect } from './autoReconnect';
+import { setupPvpModule } from './pvpModule'; // Yeni eklenen PvP modülü
 
 const config = loadConfig();
 
@@ -26,12 +27,13 @@ function startBot() {
     console.log(msg);
     io.emit('log', msg);
     
-    // ChatCraft Radar ve GUI köprüsünü bota bağlıyoruz
+    // Alt sistemleri bota bağlıyoruz
     setupChatCraftBridge(bot, io);
+    setupPvpModule(bot, io); // PvP modülü aktif edildi
     startAfkBehavior(bot);
   });
 
-  // Otomatik Yeniden Bağlanma Mekanizmasını Kuruyoruz
+  // Otomatik Yeniden Bağlanma Mekanizması
   setupAutoReconnect(bot, config, io, startBot);
 
   // Güvenli İletişim: Sadece sahibinden gelen /msg komutları
@@ -68,5 +70,5 @@ function startAfkBehavior(bot: mineflayer.Bot) {
   }, 5000); 
 }
 
-// Botu ilk kez başlatıyoruz
+// Botu başlatıyoruz
 startBot();
