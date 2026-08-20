@@ -1,12 +1,13 @@
 import mineflayer from 'mineflayer';
 import { pathfinder } from 'mineflayer-pathfinder';
-import { loadConfig, loadMemory } from './configManager';
+import { loadConfig } from './configManager';
+import './server'; // Web sunucusunu başlatır
+import { io } from './server';
 
-// Web panelinden yönetilen konfigürasyonu yüklüyoruz
 const config = loadConfig();
-const memory = loadMemory();
 
-console.log(`[BAŞLANGIÇ] Bot ${config.username} için ayarlar yükleniyor... Sürüm: ${config.version}`);
+console.log(`[BAŞLANGIÇ] Bot ${config.username} başlatılıyor... Sürüm: ${config.version}`);
+io.emit('log', `Bot ${config.username} başlatılıyor... Sürüm: ${config.version}`);
 
 const bot = mineflayer.createBot({
   host: config.host,
@@ -18,7 +19,9 @@ const bot = mineflayer.createBot({
 bot.loadPlugin(pathfinder);
 
 bot.once('spawn', () => {
-  console.log(`[BAŞARILI] Bot ${bot.username} oyuna giriş yaptı!`);
+  const msg = `[BAŞARILI] Bot ${bot.username} oyuna giriş yaptı!`;
+  console.log(msg);
+  io.emit('log', msg);
   startAfkBehavior();
 });
 
@@ -32,14 +35,16 @@ function startAfkBehavior() {
   }, 5000); 
 }
 
-// Sadece Web Panelinde belirlenen "ownerName" ile /msg üzerinden iletişim
+// Güvenli İletişim: Sadece sahibinden gelen /msg komutları
 bot.on('whisper', (username, message) => {
   if (username !== config.ownerName) {
     bot.chat(`/msg ${username} Üzgünüm, ben sadece sahibim (${config.ownerName}) ile iletişim kurarım.`);
     return;
   }
 
-  console.log(`[ÖZEL MESAJ] ${username}: ${message}`);
+  const logMsg = `[ÖZEL MESAJ] ${username}: ${message}`;
+  console.log(logMsg);
+  io.emit('log', logMsg);
   
   if (message.toLowerCase() === 'dur') {
     bot.chat(`/msg ${username} Komut alındı, duruyorum.`);
@@ -47,7 +52,14 @@ bot.on('whisper', (username, message) => {
   }
 });
 
-bot.on('error', (err) => console.log('[HATA]:', err));
+bot.on('error', (err) => {
+  const errorMsg = `[HATA]: ${err.message}`;
+  console.log(errorMsg);
+  io.emit('log', errorMsg);
+});
+
 bot.on('end', () => {
-  console.log('[BİLGİ] Bağlantı koptabaşlatılıyor, otomatik yeniden bağlanma tetiklenecek...');
+  const endMsg = '[BİLGİ] Bağlantı koptu, yeniden bağlanma hazırlığı yapılıyor...';
+  console.log(endMsg);
+  io.emit('log', endMsg);
 });
