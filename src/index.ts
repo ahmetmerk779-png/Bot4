@@ -10,6 +10,7 @@ import { askAiBrain } from './aiBrain';                        // Groq Yapay Zek
 import { buildSchematic } from './schematicModule';            // Şematik Okuma ve İnşa
 import { useCobweb, useFishingRod } from './combatToolsModule'; // Örümcek Ağı ve Olta Kullanımı
 import { autoFarm } from './farmingModule';                    // Kemik Tozu ve Tarım Modülü
+import { startAutoFishing } from './fishingModule';            // Otomatik Balıkçılık Modülü
 
 const config = loadConfig();
 
@@ -62,10 +63,17 @@ function startBot() {
       return;
     }
 
-    // Sabit Komut: Olta At
+    // Sabit Komut: Olta At (Tek seferlik)
     if (lowerMsg === 'olta at') {
       bot.chat(`/msg ${username} Olta kullanılıyor...`);
       await useFishingRod(bot, io);
+      return;
+    }
+
+    // Sabit Komut: Otomatik Balıkçılık Başlat
+    if (lowerMsg === 'balik tut' || lowerMsg === 'balikçilik baslat') {
+      bot.chat(`/msg ${username} Otomatik balıkçılık protokolü başlatılıyor...`);
+      await startAutoFishing(bot, io);
       return;
     }
 
