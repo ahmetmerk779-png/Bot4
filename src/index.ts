@@ -13,7 +13,7 @@ import { autoFarm } from './farmingModule';
 import { startAutoFishing } from './fishingModule';
 import { useRedstoneTool } from './redstoneModule';
 import { depositItems } from './chestModule';
-import { mineBlock } from './miningModule';
+import { mineBlockWithInventoryCheck } from './miningModule'; // Güncellenmiş Madencilik
 import { startMobFarm } from './mobFarmModule';
 
 const config = loadConfig();
@@ -30,6 +30,7 @@ function startBot() {
 
   bot.once('spawn', () => {
     io.emit('log', `Bot ${bot.username} oyunda!`);
+    
     // Hareket eklentisini yapılandır
     const defaultMove = new Movements(bot);
     bot.pathfinder.setMovements(defaultMove);
@@ -45,7 +46,7 @@ function startBot() {
     if (username !== config.ownerName) return;
     const lowerMsg = message.toLowerCase();
 
-    // 1. Modüler Komut Kontrolleri
+    // 1. Modüler Komutlar (Otonom Görevler)
     if (lowerMsg === 'dur') {
       bot.pathfinder.setGoal(null);
       bot.chat(`/msg ${username} Durduruldu.`);
@@ -57,7 +58,7 @@ function startBot() {
     else if (lowerMsg.startsWith('kaz ')) {
       const blockName = message.split(' ')[1];
       bot.chat(`/msg ${username} ${blockName} kazılıyor...`);
-      await mineBlock(bot, blockName);
+      await mineBlockWithInventoryCheck(bot, blockName);
     } 
     else if (lowerMsg === 'mob avla') {
       startMobFarm(bot);
