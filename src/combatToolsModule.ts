@@ -1,54 +1,36 @@
 import mineflayer from 'mineflayer';
-import { Server } from 'socket.io';
+import { Vec3 } from 'vec3';
 
-export async function useCobweb(bot: mineflayer.Bot, io: Server, targetEntity: any) {
+export async function useFishingRod(bot: mineflayer.Bot, io: any) {
   try {
-    // Envanterde örümcek ağı arıyoruz
-    const cobwebItem = bot.inventory.items().find(item => item.name === 'cobweb');
-    
-    if (!cobwebItem) {
-      io.emit('log', '[SAVAŞ ARAÇLARI] Envanterde Örümcek Ağı (cobweb) bulunamadı!');
+    const fishingRod = bot.inventory.items().find(item => item.name.includes('fishing_rod'));
+    if (!fishingRod) {
+      io.emit('log', '[SAVAŞ] Envanterde olta bulunamadı!');
       return;
     }
-
-    // Botun eline örümcek ağını kuşanması
-    await bot.equip(cobwebItem, 'hand');
-
-    // Hedefin olduğu konuma ağı yerleştirme (hedefin ayak ucu)
-    const targetPos = targetEntity.position.floored();
-    const referenceBlock = bot.blockAt(targetPos.offset(0, -1, 0));
-
-    if (referenceBlock) {
-      await bot.placeBlock(referenceBlock, new mineflayer.vec3(0, 1, 0));
-      const successMsg = `[SAVAŞ ARAÇLARI] Düşmanın önüne Örümcek Ağı yerleştirildi!`;
-      console.log(successMsg);
-      io.emit('log', successMsg);
-    }
+    await bot.equip(fishingRod, 'hand');
+    // Olta atma mantığı
+    io.emit('log', '[SAVAŞ] Olta kullanıldı.');
   } catch (err: any) {
-    io.emit('log', `[HATA] Örümcek ağı yerleştirilemedi: ${err.message}`);
+    io.emit('log', `[OLTA HATA] ${err.message}`);
   }
 }
 
-export async function useFishingRod(bot: mineflayer.Bot, io: Server) {
+export async function useCobweb(bot: mineflayer.Bot, io: any, target: any) {
   try {
-    // Envanterde olta (fishing_rod) arıyoruz
-    const rodItem = bot.inventory.items().find(item => item.name === 'fishing_rod');
-
-    if (!rodItem) {
-      io.emit('log', '[SAVAŞ ARAÇLARI] Envanterde Olta (fishing_rod) bulunamadı!');
+    const cobweb = bot.inventory.items().find(item => item.name.includes('cobweb'));
+    if (!cobweb) {
+      io.emit('log', '[SAVAŞ] Envanterde örümcek ağı yok!');
       return;
     }
-
-    // Eline oltayı kuşan
-    await bot.equip(rodItem, 'hand');
-
-    // Oltayı fırlat (veya geri çek)
-    bot.activateItem();
-    const rodMsg = `[SAVAŞ ARAÇLARI] Olta kullanıldı (Fırlatıldı / Çekildi).`;
-    console.log(rodMsg);
-    io.emit('log', rodMsg);
-
+    await bot.equip(cobweb, 'hand');
+    const targetPos = new Vec3(Math.floor(target.position.x), Math.floor(target.position.y), Math.floor(target.position.z));
+    const referenceBlock = bot.blockAt(targetPos.offset(0, -1, 0));
+    if (referenceBlock) {
+      await bot.placeBlock(referenceBlock, new Vec3(0, 1, 0));
+      io.emit('log', '[SAVAŞ] Hedefin altına örümcek ağı yerleştirildi.');
+    }
   } catch (err: any) {
-    io.emit('log', `[HATA] Olta kullanılamaz: ${err.message}`);
+    io.emit('log', `[AĞ HATA] ${err.message}`);
   }
 }
