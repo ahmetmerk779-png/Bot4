@@ -8,6 +8,7 @@ import { setupAutoReconnect } from './autoReconnect';     // Otomatik yeniden ba
 import { setupPvpModule } from './pvpModule';             // PvP ve %20 Can Kuralı (Hardcoded Interrupt)
 import { askAiBrain } from './aiBrain';                   // Groq Yapay Zeka Beyni
 import { buildSchematic } from './schematicModule';       // Şematik Okuma ve İnşa
+import { useCobweb, useFishingRod } from './combatToolsModule'; // Örümcek Ağı ve Olta Kullanımı
 
 const config = loadConfig();
 
@@ -39,7 +40,7 @@ function startBot() {
   // Otomatik Yeniden Bağlanma Mekanizması
   setupAutoReconnect(bot, config, io, startBot);
 
-  // Güvenli İletişim ve Yapay Zeka / Şematik Komut Yöneticisi
+  // Güvenli İletişim ve Komut Yöneticisi
   bot.on('whisper', async (username, message) => {
     // Sadece web panelinde tanımlanan sahibinden gelen /msg komutlarını dinler
     if (username !== config.ownerName) {
@@ -51,15 +52,36 @@ function startBot() {
     console.log(logMsg);
     io.emit('log', logMsg);
     
+    const lowerMsg = message.toLowerCase();
+
     // Sabit Komut: Dur
-    if (message.toLowerCase() === 'dur') {
+    if (lowerMsg === 'dur') {
       bot.chat(`/msg ${username} Komut alındı, duruyorum.`);
       bot.pathfinder.setGoal(null);
       return;
     }
 
+    // Sabit Komut: Olta At
+    if (lowerMsg === 'olta at') {
+      bot.chat(`/msg ${username} Olta kullanılıyor...`);
+      await useFishingRod(bot, io);
+      return;
+    }
+
+    // Sabit Komut: Örümcek Ağı At
+    if (lowerMsg === 'ag at') {
+      bot.chat(`/msg ${username} Örümcek ağı yerleştirme deneniyor...`);
+      const target = bot.nearestEntity(e => e.type === 'mob' || e.type === 'player');
+      if (target) {
+        await useCobweb(bot, io, target);
+      } else {
+        bot.chat(`/msg ${username} Yakınlarda hedef bulamadım.`);
+      }
+      return;
+    }
+
     // Sabit Komut: Şematik İnşa Et (Örnek: "insa et ev.schem")
-    if (message.toLowerCase().startsWith('insa et')) {
+    if (lowerMsg.startsWith('insa et')) {
       const parts = message.split(' ');
       const fileName = parts[2] || 'ev.schem';
       bot.chat(`/msg ${username} ${fileName} şeması okunuyor ve inşa hazırlığı yapılıyor!`);
