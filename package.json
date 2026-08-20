@@ -1,26 +1,10 @@
-{
-  "name": "minecraft-ai-bot",
-  "version": "1.0.0",
-  "description": "Otonom Minecraft 1.21.11 Yapay Zeka Destekli Survival Botu",
-  "main": "dist/index.js",
-  "scripts": {
-    "build": "tsc",
-    "start": "node dist/index.js",
-    "dev": "ts-node src/index.ts"
-  },
-  "dependencies": {
+"dependencies": {
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "groq-sdk": "^0.3.0",
     "mineflayer": "^4.20.0",
     "mineflayer-pathfinder": "^2.4.3",
     "prismarine-schematic": "^1.2.0",
-    "socket.io": "^4.7.5"
+    "socket.io": "^4.7.5",
+    "vec3": "^0.1.5"
   },
-  "devDependencies": {
-    "@types/express": "^4.17.21",
-    "@types/node": "^20.11.24",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.3.3"
-  }
-}
