@@ -11,6 +11,7 @@ import { buildSchematic } from './schematicModule';            // Şematik Okuma
 import { useCobweb, useFishingRod } from './combatToolsModule'; // Örümcek Ağı ve Olta Kullanımı
 import { autoFarm } from './farmingModule';                    // Kemik Tozu ve Tarım Modülü
 import { startAutoFishing } from './fishingModule';            // Otomatik Balıkçılık Modülü
+import { useRedstoneTool } from './redstoneModule';            // Redstone Aletleri ve Devre Yönetimi
 
 const config = loadConfig();
 
@@ -93,6 +94,15 @@ function startBot() {
     if (lowerMsg === 'tarim yap' || lowerMsg === 'ekin buyut') {
       bot.chat(`/msg ${username} Tarım alanına kemik tozu uygulaması başlatılıyor...`);
       await autoFarm(bot, io);
+      return;
+    }
+
+    // Sabit Komut: Redstone Kur (Örnek: "redstone kur lever" veya "redstone kur redstone_torch")
+    if (lowerMsg.startsWith('redstone kur')) {
+      const parts = message.split(' ');
+      const tool = parts[2] || 'lever';
+      bot.chat(`/msg ${username} ${tool} yerleştirilmesi deneniyor...`);
+      await useRedstoneTool(bot, io, tool);
       return;
     }
 
