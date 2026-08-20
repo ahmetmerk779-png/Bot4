@@ -1,12 +1,13 @@
 import mineflayer from 'mineflayer';
 import { pathfinder } from 'mineflayer-pathfinder';
 import { loadConfig } from './configManager';
-import './server';
+import './server'; // Express Web Paneli ve WebSocket sunucusunu başlatır
 import { io } from './server';
-import { setupChatCraftBridge } from './chatcraftBridge';
-import { setupAutoReconnect } from './autoReconnect';
-import { setupPvpModule } from './pvpModule';
-import { askAiBrain } from './aiBrain'; // Yapay zeka modülü eklendi
+import { setupChatCraftBridge } from './chatcraftBridge'; // Radar ve GUI köprüsü
+import { setupAutoReconnect } from './autoReconnect';     // Otomatik yeniden bağlanma
+import { setupPvpModule } from './pvpModule';             // PvP ve %20 Can Kuralı (Hardcoded Interrupt)
+import { askAiBrain } from './aiBrain';                   // Groq Yapay Zeka Beyni
+import { buildSchematic } from './schematicModule';       // Şematik Okuma ve İnşa
 
 const config = loadConfig();
 
@@ -21,6 +22,7 @@ function startBot() {
     version: config.version
   });
 
+  // Pathfinder hareket eklentisini bota yüklüyoruz
   bot.loadPlugin(pathfinder);
 
   bot.once('spawn', () => {
@@ -28,15 +30,18 @@ function startBot() {
     console.log(msg);
     io.emit('log', msg);
     
+    // Alt sistemleri ve modülleri bota bağlıyoruz
     setupChatCraftBridge(bot, io);
     setupPvpModule(bot, io);
     startAfkBehavior(bot);
   });
 
+  // Otomatik Yeniden Bağlanma Mekanizması
   setupAutoReconnect(bot, config, io, startBot);
 
-  // Yapay Zeka Destekli /msg İletişimi
+  // Güvenli İletişim ve Yapay Zeka / Şematik Komut Yöneticisi
   bot.on('whisper', async (username, message) => {
+    // Sadece web panelinde tanımlanan sahibinden gelen /msg komutlarını dinler
     if (username !== config.ownerName) {
       bot.chat(`/msg ${username} Üzgünüm, ben sadece sahibim (${config.ownerName}) ile iletişim kurarım.`);
       return;
@@ -46,17 +51,28 @@ function startBot() {
     console.log(logMsg);
     io.emit('log', logMsg);
     
+    // Sabit Komut: Dur
     if (message.toLowerCase() === 'dur') {
       bot.chat(`/msg ${username} Komut alındı, duruyorum.`);
       bot.pathfinder.setGoal(null);
       return;
     }
 
-    // Gelen mesajı Groq Yapay Zeka Beynine gönderiyoruz
+    // Sabit Komut: Şematik İnşa Et (Örnek: "insa et ev.schem")
+    if (message.toLowerCase().startsWith('insa et')) {
+      const parts = message.split(' ');
+      const fileName = parts[2] || 'ev.schem';
+      bot.chat(`/msg ${username} ${fileName} şeması okunuyor ve inşa hazırlığı yapılıyor!`);
+      io.emit('log', `[ŞEMATİK KOMUTU] ${fileName} inşa süreci tetiklendi.`);
+      await buildSchematic(bot, io, fileName);
+      return;
+    }
+
+    // Diğer tüm mesajlar Groq Yapay Zeka Beynine iletilir
     bot.chat(`/msg ${username} Düşünüyorum...`);
-    const aiAnswer = await askAiBrain(message, `Botun konumu: x:${Math.round(bot.entity.position.x)}, y:${Math.round(bot.entity.position.y)}, z:${Math.round(bot.entity.position.z)}, Can: ${bot.health}`);
+    const aiContext = `Botun konumu: x:${Math.round(bot.entity.position.x)}, y:${Math.round(bot.entity.position.y)}, z:${Math.round(bot.entity.position.z)}, Can: ${bot.health}`;
+    const aiAnswer = await askAiBrain(message, aiContext);
     
-    // Yanıtı sahibine iletiyoruz
     bot.chat(`/msg ${username} ${aiAnswer}`);
     io.emit('log', `[YAPAY ZEKA YANITI]: ${aiAnswer}`);
   });
@@ -68,6 +84,7 @@ function startBot() {
   });
 }
 
+// AFK Özelliği: Botun kafasını hafifçe hareket ettirerek sunucudan atılmasını önler
 function startAfkBehavior(bot: mineflayer.Bot) {
   setInterval(() => {
     if (!bot.entity) return;
@@ -77,4 +94,5 @@ function startAfkBehavior(bot: mineflayer.Bot) {
   }, 5000); 
 }
 
+// Bot uygulamasını ilk kez başlatıyoruz
 startBot();
