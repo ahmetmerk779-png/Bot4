@@ -3,12 +3,13 @@ import { pathfinder } from 'mineflayer-pathfinder';
 import { loadConfig } from './configManager';
 import './server'; // Express Web Paneli ve WebSocket sunucusunu başlatır
 import { io } from './server';
-import { setupChatCraftBridge } from './chatcraftBridge'; // Radar ve GUI köprüsü
-import { setupAutoReconnect } from './autoReconnect';     // Otomatik yeniden bağlanma
-import { setupPvpModule } from './pvpModule';             // PvP ve %20 Can Kuralı (Hardcoded Interrupt)
-import { askAiBrain } from './aiBrain';                   // Groq Yapay Zeka Beyni
-import { buildSchematic } from './schematicModule';       // Şematik Okuma ve İnşa
+import { setupChatCraftBridge } from './chatcraftBridge';      // Radar ve GUI köprüsü
+import { setupAutoReconnect } from './autoReconnect';          // Otomatik yeniden bağlanma
+import { setupPvpModule } from './pvpModule';                  // PvP ve %20 Can Kuralı (Hardcoded Interrupt)
+import { askAiBrain } from './aiBrain';                        // Groq Yapay Zeka Beyni
+import { buildSchematic } from './schematicModule';            // Şematik Okuma ve İnşa
 import { useCobweb, useFishingRod } from './combatToolsModule'; // Örümcek Ağı ve Olta Kullanımı
+import { autoFarm } from './farmingModule';                    // Kemik Tozu ve Tarım Modülü
 
 const config = loadConfig();
 
@@ -77,6 +78,13 @@ function startBot() {
       } else {
         bot.chat(`/msg ${username} Yakınlarda hedef bulamadım.`);
       }
+      return;
+    }
+
+    // Sabit Komut: Tarım Yap / Kemik Tozu Kullan
+    if (lowerMsg === 'tarim yap' || lowerMsg === 'ekin buyut') {
+      bot.chat(`/msg ${username} Tarım alanına kemik tozu uygulaması başlatılıyor...`);
+      await autoFarm(bot, io);
       return;
     }
 
