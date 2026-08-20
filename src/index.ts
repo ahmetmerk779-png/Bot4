@@ -3,6 +3,7 @@ import { pathfinder } from 'mineflayer-pathfinder';
 import { loadConfig } from './configManager';
 import './server'; // Web sunucusunu başlatır
 import { io } from './server';
+import { setupChatCraftBridge } from './chatcraftBridge'; // Yeni eklenen köprü
 
 const config = loadConfig();
 
@@ -22,6 +23,9 @@ bot.once('spawn', () => {
   const msg = `[BAŞARILI] Bot ${bot.username} oyuna giriş yaptı!`;
   console.log(msg);
   io.emit('log', msg);
+  
+  // ChatCraft Radar ve GUI köprüsünü bota bağlıyoruz
+  setupChatCraftBridge(bot, io);
   startAfkBehavior();
 });
 
